@@ -12,5 +12,6 @@ if($role == 'admin'){
 else{
     echo "<h1>Добрый день, $name</h1></br>";
 }
+echo "<p> {$_SERVER['REQUEST_METHOD']}</p></br>";
 echo $full_url;
 ?>
