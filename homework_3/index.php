@@ -2,6 +2,13 @@
 $routes = 
 [
     'GET' => [
+        '/' => function($params){
+            return '<h1>Главная страница</h1>
+                    <p>Добро пожаловать!</p>
+                    <ul>
+                        <li><a href="/form">Перейти к форме обратной связи</a></li>
+                    </ul>';
+        },
         '/form' => function($params){
             return '<h1>Форма обратной связи</h1>
                 <form method="POST" action="/form">
@@ -15,7 +22,8 @@ $routes =
                         <input type="email" id="email" name="email" required>
                     </div>
                     <button type="submit">Отправить</button>
-                </form>';
+                </form>
+                <p><a href="/">На главную</a></p>';
         },
     ],
     'POST' => [
@@ -27,6 +35,7 @@ $routes =
                         <h3>Вы отправили:</h3>
                         <p><strong>Имя:</strong> ' . $name . '</p>
                         <p><strong>Email:</strong> ' . $email . '</p>
+                        <p><a href="/form">Назад к форме</a> | <a href="/">На главную</a></p>
                     </div>';
         }
     ],    
@@ -48,4 +57,3 @@ if (isset($routes[$method][$uri])) {
     http_response_code(404);
     echo '404 - Страница не найдена';
 }
-
