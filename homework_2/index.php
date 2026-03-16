@@ -135,7 +135,7 @@ usort($filtered_arr, function($a, $b) use ($sort, $dir) {
     }
 });
 
-// Пагинация
+
 if ($current_page < 1) $current_page = 1;
 $total_items = count($filtered_arr);
 $total_pages = ceil($total_items / $limit);
