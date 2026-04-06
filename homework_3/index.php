@@ -45,7 +45,7 @@ $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
 $params = [];
 if ($method === 'GET') {
-    $params = $_GET;
+    $params = $_GET; 
 } elseif ($method === 'POST') {
     $params = $_POST;
 }
