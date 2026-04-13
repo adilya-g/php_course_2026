@@ -5,6 +5,7 @@ require_once 'vendor/autoload.php';
 
 // Настройки клиента
 $client = new Google\Client();
+$client->setHttpClient(new \GuzzleHttp\Client(['verify' => false])); 
 $client->setAuthConfig('client_secret.json'); // файл с учётными данными из Google Cloud Console
 $client->addScope(Google\Service\Gmail::GMAIL_READONLY); // доступ только для чтения писем
 // Можно использовать другие области: GMAIL_SEND, GMAIL_MODIFY, GMAIL_COMPOSE, MAIL_GOOGLE_COM и т.д.

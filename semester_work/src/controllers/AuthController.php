@@ -2,9 +2,16 @@
 
 namespace MyApp\Controllers;
 
-use MyApp\AbstractController;
+require_once 'vendor/autoload.php';
+
+use MyApp\Controllers\AbstractController;
+use MyApp\Exceptions\AuthenticationException;
+use MyApp\Exceptions\ApiException;
+use MyApp\Logging\LoggerFactory;
 use Google\Client;
 use Google_Service_Gmail;
+use Google_Service_Exception;
+use Exception;
 
 class AuthController extends AbstractController
 {
@@ -13,51 +20,125 @@ class AuthController extends AbstractController
     
     public function __construct()
     {
-        $this->googleClient = new Client();
-        $this->redirectUri = $this->getRedirectUri();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         
+        $this->googleClient = new Client();
+        $this->redirectUri = $this->getRedirectUri();   
         $this->configureGoogleClient();
     }
     
     private function configureGoogleClient(): void
     {
-        $configPath = __DIR__ . '/../../config/client_secret.json';
+        $configPath = __DIR__ . ($_ENV['GOOGLE_CLIENT_SECRET_PATH'] ?? '/../../client_secret.json');
         
         if (!file_exists($configPath)) {
-            throw new \Exception('Google client secret file not found');
+            LoggerFactory::getLogger()->critical('Google client secret file not found', ['path' => $configPath]);
+            throw new AuthenticationException('Отсутствует файл конфигурации Google OAuth.');
         }
         
-        $this->googleClient->setAuthConfig($configPath);
-        $this->googleClient->addScope(Google_Service_Gmail::GMAIL_READONLY);
-        $this->googleClient->setRedirectUri($this->redirectUri);
-        $this->googleClient->setAccessType('offline');
-        $this->googleClient->setPrompt('consent');
+        try {
+            $this->googleClient->setAuthConfig($configPath);
+            
+            $verifySSL = filter_var($_ENV['GUZZLE_VERIFY_SSL'] ?? true, FILTER_VALIDATE_BOOLEAN);
+            $this->googleClient->setHttpClient(new \GuzzleHttp\Client(['verify' => $verifySSL]));
+            
+            $this->googleClient->addScope(Google_Service_Gmail::GMAIL_READONLY);
+            $this->googleClient->setRedirectUri($this->redirectUri);
+            $this->googleClient->setAccessType('offline');
+            $this->googleClient->setPrompt('consent');
+        } catch (Exception $e) {
+            LoggerFactory::getLogger()->error('Google client configuration failed', ['error' => $e->getMessage()]);
+            throw new AuthenticationException('Ошибка настройки Google клиента.', 0, $e);
+        }
     }
     
     private function getRedirectUri(): string
     {
-        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
         $host = $_SERVER['HTTP_HOST'];
-        $basePath = '/public/index.php';
+        return $protocol . $host . '/auth';
+    }
+    
+    public function ensureValidToken(): bool
+    {
+        if (!isset($_SESSION['google_access_token']) || empty($_SESSION['google_access_token'])) {
+            LoggerFactory::getLogger()->warning('ensureValidToken: no token in session');
+            return false;
+        }
+            
+        $this->googleClient->setAccessToken($_SESSION['google_access_token']);
         
-        return $protocol . $host . $basePath;
+        if ($this->googleClient->isAccessTokenExpired()) {
+            $refreshToken = $this->googleClient->getRefreshToken();
+            if ($refreshToken) {
+                try {
+                    $this->googleClient->fetchAccessTokenWithRefreshToken($refreshToken);
+                    $newToken = $this->googleClient->getAccessToken();
+                    if (!empty($newToken)) {
+                        $_SESSION['google_access_token'] = $newToken;
+                        $this->updateTokenInDatabase($newToken);
+                        LoggerFactory::getLogger()->info('Token refreshed successfully');
+                        return true;
+                    } else {
+                        LoggerFactory::getLogger()->error('Failed to obtain new token during refresh');
+                        $this->clearAuth();
+                        return false;
+                    }
+                } catch (Exception $e) {
+                    LoggerFactory::getLogger()->error('Token refresh error', ['error' => $e->getMessage()]);
+                    $this->clearAuth();
+                    return false;
+                }
+            } else {
+                LoggerFactory::getLogger()->warning('No refresh token available, token expired');
+                $this->clearAuth();
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    private function clearAuth(): void
+    {
+        unset($_SESSION['google_access_token']);
     }
     
     public function index(array $params = []): void
     {
-        if (!isset($params['code']) && !isset($_GET['code'])) {
-            $this->redirectToGoogleAuth();
-            return;
-        }
-        
         $code = $params['code'] ?? $_GET['code'] ?? null;
-        
         if ($code) {
             $this->authenticateWithCode($code);
             return;
         }
         
-        $this->checkAndUseToken();
+        if ($this->ensureValidToken()) {
+            $this->fetchAndSaveGmailData();
+        } else {
+            $this->redirectToGoogleAuth();
+        }
+    }
+    
+    private function authenticateWithCode(string $code): void
+    {
+        try {
+            $this->googleClient->authenticate($code);
+            $accessToken = $this->googleClient->getAccessToken();
+            if (empty($accessToken)) {
+                throw new AuthenticationException('Empty token after authentication');
+            }
+            $_SESSION['google_access_token'] = $accessToken;
+            LoggerFactory::getLogger()->info('Token obtained and saved to session');
+            
+            header('Location: ' . $this->redirectUri);
+            exit;
+            
+        } catch (Exception $e) {
+            LoggerFactory::getLogger()->error('Authentication with code failed', ['error' => $e->getMessage()]);
+            throw new AuthenticationException('Ошибка аутентификации через Google.', 0, $e);
+        }
     }
     
     private function redirectToGoogleAuth(): void
@@ -67,68 +148,27 @@ class AuthController extends AbstractController
         exit;
     }
     
-    private function authenticateWithCode(string $code): void
-    {
-        try {
-            $this->googleClient->authenticate($code);
-            $accessToken = $this->googleClient->getAccessToken();
-            
-            $_SESSION['google_access_token'] = $accessToken;
-            
-            $this->saveTokenToDatabase($accessToken);
-            
-            $this->redirect('/auth/success');
-            
-        } catch (\Exception $e) {
-            $this->handleError('Authentication failed: ' . $e->getMessage());
-        }
-    }
-    
-    private function checkAndUseToken(): void
-    {
-        if (isset($_SESSION['google_access_token']) && $_SESSION['google_access_token']) {
-            $this->googleClient->setAccessToken($_SESSION['google_access_token']);
-            
-            if ($this->googleClient->isAccessTokenExpired()) {
-                if ($this->googleClient->getRefreshToken()) {
-                    $this->refreshAccessToken();
-                } else {
-                    $this->clearAuthAndRedirect();
-                }
-            } else {
-                $this->showGmailData();
-            }
-        } else {
-            $this->redirectToGoogleAuth();
-        }
-    }
-    
-    private function refreshAccessToken(): void
-    {
-        try {
-            $this->googleClient->fetchAccessTokenWithRefreshToken(
-                $this->googleClient->getRefreshToken()
-            );
-            $_SESSION['google_access_token'] = $this->googleClient->getAccessToken();
-            
-            $this->updateTokenInDatabase($_SESSION['google_access_token']);
-            
-            $this->redirect('/auth');
-            
-        } catch (\Exception $e) {
-            $this->handleError('Token refresh failed: ' . $e->getMessage());
-        }
-    }
-    
     private function clearAuthAndRedirect(): void
     {
         unset($_SESSION['google_access_token']);
         $this->redirect('/auth');
     }
     
-    private function showGmailData(): void
+    public function fetchAndSaveGmailData(): void
     {
         try {
+            if ($this->googleClient->isAccessTokenExpired()) {
+                if ($this->googleClient->getRefreshToken()) {
+                    $this->googleClient->fetchAccessTokenWithRefreshToken(
+                        $this->googleClient->getRefreshToken()
+                    );
+                    $_SESSION['google_access_token'] = $this->googleClient->getAccessToken();
+                } else {
+                    $this->clearAuthAndRedirect();
+                    return;
+                }
+            }
+
             $service = new Google_Service_Gmail($this->googleClient);
             $user = 'me';
             
@@ -140,15 +180,30 @@ class AuthController extends AbstractController
                 $emails[] = $this->parseEmailData($fullMessage);
             }
             
-            $this->render('auth/gmail', [
-                'title' => 'Ваши письма Gmail',
-                'emails' => $emails,
-                'totalCount' => count($emails)
-            ]);
+            $this->saveEmailsToJson($emails);
             
-        } catch (\Exception $e) {
-            $this->handleError('Failed to fetch Gmail data: ' . $e->getMessage());
+            $this->redirect('/');
+            
+        } catch (Google_Service_Exception $e) {
+            $error = json_decode($e->getMessage(), true);
+            LoggerFactory::getLogger()->error('Google API error', ['error' => $error]);
+            throw ApiException::fromGoogleError($error, $e);
+        } catch (Exception $e) {
+            LoggerFactory::getLogger()->error('Failed to fetch Gmail data', ['error' => $e->getMessage()]);
+            throw new ApiException('Не удалось загрузить письма.', 0, $e);
         }
+    }
+
+    private function saveEmailsToJson(array $emails): void
+    {
+        $storageDir = __DIR__ . '/../../storage/emails';
+        
+        if (!is_dir($storageDir)) {
+            mkdir($storageDir, 0755, true);
+        }
+        
+        $filename = $storageDir . '/emails_' . date('Y-m-d_His') . '.json';
+        file_put_contents($filename, json_encode($emails, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     }
     
     private function parseEmailData($message): array
@@ -178,14 +233,6 @@ class AuthController extends AbstractController
         return $data;
     }
     
-    public function success(array $params = []): void
-    {
-        $this->render('auth/success', [
-            'title' => 'Авторизация успешна',
-            'message' => 'Вы успешно авторизовались через Google'
-        ]);
-    }
-    
     public function logout(array $params = []): void
     {
         unset($_SESSION['google_access_token']);
@@ -193,7 +240,8 @@ class AuthController extends AbstractController
         if (isset($_SESSION['google_access_token'])) {
             try {
                 $this->googleClient->revokeToken();
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
+                LoggerFactory::getLogger()->warning('Token revocation failed', ['error' => $e->getMessage()]);
             }
         }
         
@@ -207,15 +255,5 @@ class AuthController extends AbstractController
     private function updateTokenInDatabase(array $token): void
     {
         $this->saveTokenToDatabase($token);
-    }
-    
-    private function handleError(string $message): void
-    {
-        error_log($message);
-        
-        $this->render('error', [
-            'title' => 'Ошибка авторизации',
-            'message' => $message
-        ]);
     }
 }

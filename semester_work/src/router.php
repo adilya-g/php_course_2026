@@ -84,13 +84,10 @@ class Router
         if ($uri === '' || $uri === '/public/index.php') {
             $uri = '/';
         }
-        
-        echo "Debug: Trying to match URI: '{$uri}' with method: {$method}<br>";
-        
+        $uri = parse_url($uri, PHP_URL_PATH);
         $routeFound = false;
         
         foreach ($this->routes as $route) {
-            echo "Debug: Checking route: {$route['method']} - {$route['pattern']}<br>";
             
             if ($route['method'] !== $method) {
                 continue;
@@ -104,17 +101,13 @@ class Router
                 $controllerClass = 'MyApp\\Controllers\\' . $route['controller'];
                 $actionName = $route['action'];
                 
-                echo "Debug: Found controller: {$controllerClass}::{$actionName}<br>";
-                
                 if (!class_exists($controllerClass)) {
-                    echo "Error: Controller class {$controllerClass} not found<br>";
                     return;
                 }
                 
                 $controller = new $controllerClass();
                 
                 if (!method_exists($controller, $actionName)) {
-                    echo "Error: Method {$actionName} not found in {$controllerClass}<br>";
                     return;
                 }
                 

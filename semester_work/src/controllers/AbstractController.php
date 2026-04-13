@@ -1,23 +1,9 @@
 <?php
 
-namespace MyApp;
+namespace MyApp\Controllers;
 
 abstract class AbstractController
-{
-    protected function render(string $view, array $data = []): void
-    {
-        extract($data);
-        
-        $viewPath = __DIR__ . '/../views/' . $view . '.php';
-        
-        if (file_exists($viewPath)) {
-            require $viewPath;
-        } else {
-            throw new \Exception("View {$view} not found");
-        }
-    }
-    
-    
+{   
     protected function redirect(string $url): void
     {
         header("Location: {$url}");
