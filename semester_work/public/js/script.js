@@ -54,31 +54,77 @@ function renderCalendar() {
     }
 }
 
-function renderTimeline() {
+async function renderTimeline() {
     const timelineHours = document.getElementById('timelineHours');
-    timelineHours.innerHTML = '';
+    // Показываем состояние загрузки
+    timelineHours.innerHTML = '<div class="timeline-loading">⏳ Загрузка расписания...</div>';
 
-    const now = new Date();
-    const currentHour = now.getHours();
+    try {
+        const response = await fetch('/home/events');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-    for (let hour = 8; hour <= 20; hour++) {
-        const slot = document.createElement('div');
-        slot.className = 'timeline-slot';
+        const events = await response.json();
+        timelineHours.innerHTML = ''; // Очищаем лоадер после успешной загрузки
 
-        const timeStr = `${hour.toString().padStart(2, '0')}:00`;
+        const now = new Date();
+        const currentHour = now.getHours();
 
-        slot.innerHTML = `
-            <div class="timeline-time">${timeStr}</div>
-            <div class="timeline-event">
-                ${hour === currentHour ? '🔵 Текущее время' : hour === 15 ? '📅 Встреча с командой' : ''}
-            </div>
-        `;
+        // Группируем события по часам для быстрого поиска
+        const eventsByHour = {};
+        if (Array.isArray(events)) {
+            events.forEach(evt => {
+                if (evt.date !== currentDate) {
+                    return;
+                }
+                // Пытаемся извлечь час из разных возможных полей ответа API
+                let hour = evt.hour;
+                if (hour === undefined && evt.start) hour = new Date(evt.start).getHours();
+                if (hour === undefined && evt.date) hour = new Date(evt.date).getHours();
+                if (hour === undefined && evt.time) hour = parseInt(evt.time.split(':')[0], 10);
 
-        timelineHours.appendChild(slot);
+                if (hour >= 8 && hour <= 20) {
+                    if (!eventsByHour[hour]) eventsByHour[hour] = [];
+                    eventsByHour[hour].push(evt);
+                }
+            });
+        }
+
+        for (let hour = 8; hour <= 20; hour++) {
+            const slot = document.createElement('div');
+            slot.className = 'timeline-slot';
+            const timeStr = `${hour.toString().padStart(2, '0')}:00`;
+
+            let eventsHtml = '';
+
+            // Индикатор текущего времени
+            if (hour === currentHour) {
+                eventsHtml += '<div class="timeline-now">🔵 Сейчас</div>';
+            }
+
+            // Рендер событий для этого часа
+            if (eventsByHour[hour]) {
+                eventsByHour[hour].forEach(evt => {
+                    const title = evt.title || evt.summary || evt.name || 'Событие';
+                    // Если в событии есть точное время, показываем его
+                    const timeStrEvt = evt.time || (evt.start ? new Date(evt.start).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '');
+                    eventsHtml += `<div class="timeline-event-item">📅 ${timeStrEvt ? timeStrEvt + ' ' : ''}${title}</div>`;
+                });
+            }
+
+            slot.innerHTML = `
+                <div class="timeline-time">${timeStr}</div>
+                <div class="timeline-events">
+                    ${eventsHtml || '<span class="timeline-empty">—</span>'}
+                </div>
+            `;
+
+            timelineHours.appendChild(slot);
+        }
+    } catch (error) {
+        console.error('Ошибка рендера таймлайна:', error);
+        timelineHours.innerHTML = `<div class="timeline-error">❌ Не удалось загрузить расписание: ${error.message}</div>`;
     }
 }
-
-// Делаем функцию async, чтобы использовать await
 async function renderEmails() {
     const gmailList = document.getElementById('gmailList');
     gmailList.innerHTML = '<div class="loading">Загрузка...</div>';

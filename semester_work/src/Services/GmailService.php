@@ -21,7 +21,6 @@ class GmailService
     private IMailRepository $mailRepository;
     private Client $googleClient;
     private FileLogger $fileLogger;
-    private Google_Service_Gmail $googleGmailService;
 
     function __construct(ITokenRepository $tokenRepository,
                          IUserRepository $userRepository,
