@@ -33,4 +33,28 @@ class AppException extends Exception
             'line'      => $this->getLine(),
         ], $this->context);
     }
+
+    public static function fromGoogleError(array $error, ?Google_Service_Exception $previous = null): self
+    {
+        $message = $error['error']['message'] ?? 'Google API error';
+        $code = $error['error']['code'] ?? 500;
+
+        // Извлекаем детали ошибки
+        $details = $error['error']['details'] ?? [];
+        $reason = $details[0]['reason'] ?? 'unknown';
+
+        // Формируем понятное сообщение для пользователя
+        switch ($reason) {
+            case 'CREDENTIALS_MISSING':
+                $userMessage = 'Отсутствует авторизация. Пожалуйста, войдите снова.';
+                break;
+            case 'invalid_grant':
+                $userMessage = 'Сессия истекла. Пожалуйста, авторизуйтесь заново.';
+                break;
+            default:
+                $userMessage = 'Ошибка при работе с Gmail API: ' . $message;
+        }
+
+        return new self($userMessage, $code, $previous);
+    }
 }

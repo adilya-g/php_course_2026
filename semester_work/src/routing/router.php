@@ -1,11 +1,23 @@
 <?php
 
-namespace MyApp;
+namespace MyApp\routing;
+
+use MyApp\DIContainer\Container;
+use MyApp\Logging\FileLogger;
+use ReflectionClass;
+use MyApp\attributes\Route;
 
 class Router
 {
     private array $routes = [];
-    
+    private FileLogger $logger;
+    private Container $container;
+
+    function __construct(FileLogger $logger, Container $container)
+    {
+        $this->logger = $logger;
+        $this->container = $container;
+    }
     public function addRoute(string $method, string $pattern, string $controller, string $action): void
     {
         $this->routes[] = [
@@ -14,6 +26,33 @@ class Router
             'controller' => $controller,
             'action' => $action
         ];
+    }
+
+    public function register(array $classes)
+    {
+
+        foreach ($classes as $class)
+        {
+            $reflector = new ReflectionClass($class);
+            $methods = $reflector->getMethods();
+
+            foreach ($methods as $method)
+            {
+                $attributes = $method->getAttributes(Route::class);
+
+                foreach ($attributes as $attribute)
+                {
+                    $route = $attribute->newInstance();
+
+                    $path = $route->path;
+                    $httpMethods = $route->methods;
+                    $controller = $class;
+                    $action = $method->getName();
+                    $this->logger->info("path: $path");
+                    $this->addRoute($httpMethods[0], $path, $controller, $action);
+                }
+            }
+        }
     }
     
     private function matchPattern(string $pattern, string $uri): bool
@@ -77,7 +116,7 @@ class Router
         return $params;
     }
     
-    public function dispatch(string $uri, ?string $method = null): void
+    public function dispatch(string $uri, ?string $method = null)
     {
         $method = $method ?? $this->getHttpMethod();
         
@@ -98,31 +137,27 @@ class Router
                 $params = $this->extractParams($route['pattern'], $uri);
                 $params['request'] = $this->getRequestParams();
                 
-                $controllerClass = 'MyApp\\Controllers\\' . $route['controller'];
+                $controllerClass =  $route['controller'];
                 $actionName = $route['action'];
                 
                 if (!class_exists($controllerClass)) {
+                    echo $controllerClass . " does not exist\n";
                     return;
                 }
                 
-                $controller = new $controllerClass();
+                $controller = $this->container->get($controllerClass);
                 
                 if (!method_exists($controller, $actionName)) {
                     return;
                 }
-                
+
                 $controller->$actionName($params);
                 return;
             }
         }
         
         if (!$routeFound) {
-            http_response_code(404);
-            echo "Route not found for URI: '{$uri}' with method: {$method}<br>";
-            echo "<br>Available routes:<br>";
-            foreach ($this->routes as $route) {
-                echo "- {$route['method']} : {$route['pattern']}<br>";
-            }
+            return false;
         }
     }
 }

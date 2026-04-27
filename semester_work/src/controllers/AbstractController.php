@@ -58,4 +58,13 @@ abstract class AbstractController
     {
         return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
     }
+
+    protected function render($templatePath, $data = []){
+        $template = file_get_contents(__DIR__ . '/../../public/'.$templatePath);
+        extract($data, EXTR_SKIP);
+        ob_start();
+        eval('?>'.$template.'<?php ');
+        $content = ob_get_clean();
+        return $content;
+    }
 }
