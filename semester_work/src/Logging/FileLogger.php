@@ -19,7 +19,7 @@ class FileLogger implements LoggerInterface
     {
         $logEntry = date('Y-m-d H:i:s') . ' ' . $level . ' [' . gethostname() . '] ';
         $logEntry .= $message . ' ' . json_encode($context, JSON_UNESCAPED_UNICODE) . PHP_EOL;
-        
+
         file_put_contents($this->logFile, $logEntry, FILE_APPEND | LOCK_EX);
     }
 
@@ -27,7 +27,7 @@ class FileLogger implements LoggerInterface
     {
         $logEntry = date('Y-m-d H:i:s') . ' ERROR [' . gethostname() . '] ';
         $logEntry .= $message . ' ' . json_encode($context, JSON_UNESCAPED_UNICODE) . PHP_EOL;
-        
+
         file_put_contents($this->logFile, $logEntry, FILE_APPEND | LOCK_EX);
     }
 

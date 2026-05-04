@@ -1,4 +1,5 @@
 <?php
+
 $githubToken = $_POST['githubToken'] ?? '';
 
 if (empty($githubToken)) {
@@ -18,9 +19,9 @@ curl_setopt_array($ch, [
         'Authorization: Bearer ' . $githubToken,
         'User-Agent: PHP-App',
         'Accept: application/vnd.github.v3+json',
-        'X-GitHub-Api-Version: 2022-11-28'
+        'X-GitHub-Api-Version: 2022-11-28',
     ],
-    CURLOPT_SSL_VERIFYPEER => false
+    CURLOPT_SSL_VERIFYPEER => false,
 ]);
 
 $response = curl_exec($ch);
@@ -43,4 +44,3 @@ if ($httpCode === 401) {
     echo "HTTP код: $httpCode<br>";
     echo "Ответ: " . htmlspecialchars($response);
 }
-?>

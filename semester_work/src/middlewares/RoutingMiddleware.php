@@ -11,7 +11,7 @@ class RoutingMiddleware implements IMiddleware
 {
     private Router $router;
 
-    function __construct(Router $router)
+    public function __construct(Router $router)
     {
         $this->router = $router;
     }
@@ -32,8 +32,7 @@ class RoutingMiddleware implements IMiddleware
 
         $requestMethod = $_SERVER['REQUEST_METHOD'];
         $routeFound = $this->router->dispatch($requestUri, $requestMethod);
-        if(!$routeFound)
-        {
+        if (!$routeFound) {
             return $next($request);
         }
     }

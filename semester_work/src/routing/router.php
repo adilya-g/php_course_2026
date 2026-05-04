@@ -13,7 +13,7 @@ class Router
     private FileLogger $logger;
     private Container $container;
 
-    function __construct(FileLogger $logger, Container $container)
+    public function __construct(FileLogger $logger, Container $container)
     {
         $this->logger = $logger;
         $this->container = $container;
@@ -24,24 +24,21 @@ class Router
             'method' => $method,
             'pattern' => $pattern,
             'controller' => $controller,
-            'action' => $action
+            'action' => $action,
         ];
     }
 
     public function register(array $classes)
     {
 
-        foreach ($classes as $class)
-        {
+        foreach ($classes as $class) {
             $reflector = new ReflectionClass($class);
             $methods = $reflector->getMethods();
 
-            foreach ($methods as $method)
-            {
+            foreach ($methods as $method) {
                 $attributes = $method->getAttributes(Route::class);
 
-                foreach ($attributes as $attribute)
-                {
+                foreach ($attributes as $attribute) {
                     $route = $attribute->newInstance();
 
                     $path = $route->path;
@@ -54,21 +51,21 @@ class Router
             }
         }
     }
-    
+
     private function matchPattern(string $pattern, string $uri): bool
     {
         if ($pattern === $uri) {
             return true;
         }
-        
+
         $regex = '#^' . preg_replace('/\{(\w+)\}/', '([^/]+)', $pattern) . '$#';
         return preg_match($regex, $uri) === 1;
     }
-    
+
     private function extractParams(string $pattern, string $uri): array
     {
         $regex = '#^' . preg_replace('/\{(\w+)\}/', '(?P<$1>[^/]+)', $pattern) . '$#';
-        
+
         if (preg_match($regex, $uri, $matches)) {
             $params = [];
             foreach ($matches as $key => $value) {
@@ -78,33 +75,33 @@ class Router
             }
             return $params;
         }
-        
+
         return [];
     }
-    
+
     private function getHttpMethod(): string
     {
         $method = $_SERVER['REQUEST_METHOD'];
-        
+
         if ($method === 'POST' && isset($_POST['_method'])) {
             $method = strtoupper($_POST['_method']);
         }
-        
+
         return $method;
     }
-    
+
     private function getRequestParams(): array
     {
         $params = [];
-        
+
         if (!empty($_GET)) {
             $params['query'] = $_GET;
         }
-        
+
         if (!empty($_POST)) {
             $params['post'] = $_POST;
         }
-        
+
         $input = file_get_contents('php://input');
         if (!empty($input)) {
             $jsonData = json_decode($input, true);
@@ -112,41 +109,40 @@ class Router
                 $params['json'] = $jsonData;
             }
         }
-        
+
         return $params;
     }
-    
+
     public function dispatch(string $uri, ?string $method = null)
     {
         $method = $method ?? $this->getHttpMethod();
-        
+
         if ($uri === '' || $uri === '/public/index.php') {
             $uri = '/';
         }
         $uri = parse_url($uri, PHP_URL_PATH);
         $routeFound = false;
-        
+
         foreach ($this->routes as $route) {
-            
             if ($route['method'] !== $method) {
                 continue;
             }
-            
+
             if ($this->matchPattern($route['pattern'], $uri)) {
                 $routeFound = true;
                 $params = $this->extractParams($route['pattern'], $uri);
                 $params['request'] = $this->getRequestParams();
-                
+
                 $controllerClass =  $route['controller'];
                 $actionName = $route['action'];
-                
+
                 if (!class_exists($controllerClass)) {
                     echo $controllerClass . " does not exist\n";
                     return;
                 }
-                
+
                 $controller = $this->container->get($controllerClass);
-                
+
                 if (!method_exists($controller, $actionName)) {
                     return;
                 }
@@ -155,7 +151,7 @@ class Router
                 return;
             }
         }
-        
+
         if (!$routeFound) {
             return false;
         }

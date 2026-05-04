@@ -12,7 +12,7 @@ class AuthenticationException extends AppException
         string $message = "Требуется аутентификация",
         int $code = 401,
         ?Throwable $previous = null,
-        array $context = []
+        array $context = [],
     ) {
         parent::__construct($message, $code, $previous, $context);
     }

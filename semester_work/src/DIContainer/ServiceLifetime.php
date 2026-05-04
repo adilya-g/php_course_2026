@@ -7,5 +7,4 @@ enum ServiceLifetime
     case Singleton;
     case Scoped;
     case Transient;
-
 }

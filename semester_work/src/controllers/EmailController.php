@@ -14,7 +14,7 @@ class EmailController extends AbstractController
     private GmailService $gmailService;
     private FileLogger $fileLogger;
 
-    function __construct(AuthService $authService, GmailService $gmailService, FileLogger $fileLogger)
+    public function __construct(AuthService $authService, GmailService $gmailService, FileLogger $fileLogger)
     {
         $this->authService = $authService;
         $this->gmailService = $gmailService;

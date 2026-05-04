@@ -1,4 +1,5 @@
 <?php
+
 namespace MyApp\DIContainer;
 
 use ReflectionClass;
@@ -22,7 +23,7 @@ class Container
     public function setClass(string $id, ?string $class = null): self
     {
         $class = $class ?? $id;
-        $this->definitions[$id] = function(Container $c) use ($class) {
+        $this->definitions[$id] = function (Container $c) use ($class) {
             return $c->resolve($class);
         };
         return $this;
@@ -34,12 +35,13 @@ class Container
             $factory = $id;
         }
 
-        $this->definitions[$id] = function(Container $c) use ($id, $factory) {
+        $this->definitions[$id] = function (Container $c) use ($id, $factory) {
             if (!isset($this->singletons[$id])) {
                 if (is_string($factory)) {
                     if (interface_exists($factory)) {
                         throw new InvalidArgumentException(
-                            "Cannot bind interface '{$factory}' to singleton. Use singleton('interface', ConcreteClass::class) or provide a factory."
+                            "Cannot bind interface '{$factory}' to singleton. 
+                            Use singleton('interface', ConcreteClass::class) or provide a factory.",
                         );
                     }
 
@@ -72,7 +74,7 @@ class Container
             throw new InvalidArgumentException("Class '{$implementation}' must implement interface '{$interface}'");
         }
 
-        $this->definitions[$interface] = function(Container $c) use ($implementation) {
+        $this->definitions[$interface] = function (Container $c) use ($implementation) {
             return $c->resolve($implementation);
         };
         return $this;
@@ -91,7 +93,7 @@ class Container
         if (interface_exists($interface) && !is_subclass_of($implementation, $interface)) {
             throw new InvalidArgumentException("Class '{$implementation}' must implement interface '{$interface}'");
         }
-        $this->singleton($interface, function(Container $c) use ($implementation) {
+        $this->singleton($interface, function (Container $c) use ($implementation) {
             return $c->resolve($implementation);
         });
         return $this;
@@ -100,7 +102,7 @@ class Container
     public function instance(string $id, object $instance): self
     {
         $this->singletons[$id] = $instance;
-        $this->definitions[$id] = function() use ($instance) {
+        $this->definitions[$id] = function () use ($instance) {
             return $instance;
         };
         return $this;
@@ -146,7 +148,7 @@ class Container
 
         if (interface_exists($id)) {
             throw new InvalidArgumentException(
-                "Interface '{$id}' not bound to any implementation. Use bind() or bindSingleton() first."
+                "Interface '{$id}' not bound to any implementation. Use bind() or bindSingleton() first.",
             );
         }
         throw new InvalidArgumentException("Service '{$id}' not found in container");
@@ -205,7 +207,8 @@ class Container
         }
 
         if (!$type instanceof ReflectionNamedType) {
-            throw new RuntimeException("Union or intersection types are not supported for parameter '{$parameter->getName()}'");
+            throw new RuntimeException("Union or intersection types are not 
+            supported for parameter '{$parameter->getName()}'");
         }
 
         $typeName = $type->getName();
@@ -227,7 +230,9 @@ class Container
 
         if (interface_exists($typeName) || class_exists($typeName)) {
             throw new RuntimeException(
-                "Cannot resolve dependency '{$typeName}' for parameter '{$parameter->getName()}'. Use bind() or bindSingleton() first."
+                "Cannot resolve dependency '{$typeName}' for 
+                parameter '{$parameter->getName()}'. Use bind() 
+                or bindSingleton() first.",
             );
         }
 

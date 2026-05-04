@@ -8,7 +8,6 @@ use MyApp\middlewares\IMiddleware;
 
 class StaticFileMiddleware implements IMiddleware
 {
-
     private array $mimeTypes = [
         "js" => "application/javascript",
         "html" => "text/html",
@@ -32,19 +31,21 @@ class StaticFileMiddleware implements IMiddleware
         "woff2" => "font/woff2",
         "ttf" => "font/ttf",
         "eot" => "application/vnd.ms-fontobject",
-        "" => "application/octet-stream"
+        "" => "application/octet-stream",
     ];
     public function handle(Request $request, $next)
     {
         $mimeType = $this->getMimeType($request->uri);
-        $filePath = __DIR__ . '\..\..\public'. $request->uri;
+        $filePath = __DIR__ . '\..\..\public' . $request->uri;
         if (!is_file($filePath)) {
             exit;
         }
         $fileSize = filesize($filePath);
         header('Content-Type: ' . $mimeType);
         header('Content-Length: ' . $fileSize);
-        if (ob_get_level()) ob_end_clean();
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
         readfile($filePath);
         exit;
     }

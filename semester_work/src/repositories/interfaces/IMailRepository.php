@@ -6,12 +6,12 @@ use MyApp\entities\Mail;
 
 interface IMailRepository
 {
-    function saveMail(Mail $mail): ?Mail;
-    function getMail($mailId): ?Mail;
-    function getMails($userId): ?array;
-    function deleteMail($mailId): bool;
-    function updateMail($mailId, $mailData): bool;
+    public function saveMail(Mail $mail): ?Mail;
+    public function getMail($mailId): ?Mail;
+    public function getMails($userId): ?array;
+    public function deleteMail($mailId): bool;
+    public function updateMail($mailId, $mailData): bool;
 
-    function getLastHistoryId(int $userId): ?string;
-    function saveLastHistoryId(int $userId, string $historyId): bool;
+    public function getLastHistoryId(int $userId): ?string;
+    public function saveLastHistoryId(int $userId, string $historyId): bool;
 }

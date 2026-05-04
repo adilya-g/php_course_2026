@@ -6,7 +6,7 @@ use Dotenv\Dotenv;
 use MyApp\Controllers\AuthController;
 use MyApp\controllers\EmailController;
 use MyApp\Controllers\HomeController;
-use MyApp\database\database;
+use MyApp\database\Database;
 use MyApp\DIContainer\Container;
 use MyApp\DIContainer\ContainerInterface;
 use MyApp\entities\Request;
@@ -47,7 +47,7 @@ try {
     $servicesContainer = new Container();
     $servicesContainer->singleton(FileLogger::class);
 
-    $servicesContainer->singleton(database::class);
+    $servicesContainer->singleton(Database::class);
     $servicesContainer->singleton(PDO::class);
 
 
@@ -81,8 +81,8 @@ try {
             [
                 $exception->getCode(),
                 $exception->getFile(),
-                $exception->getLine()
-            ]
+                $exception->getLine(),
+            ],
         );
         echo "An error occurred: " . $exception->getMessage();
     });
@@ -99,8 +99,6 @@ try {
         ->useMiddleware(RoutingMiddleware::class, $servicesContainer)
         ->useMiddleware(middlewares\StaticFileMiddleware::class, $servicesContainer);
     $pipeline->executeAsync($request);
-
-
 } catch (Exception $exception) {
     echo $exception->getMessage();
 }

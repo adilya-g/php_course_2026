@@ -6,9 +6,9 @@ use MyApp\Entities\User;
 
 interface IUserRepository
 {
-    function getUserByEmail(string $email);
-    function getUserById(int $id);
-    function saveNewUser(User $user);
-    function updateUser(User $user);
-    function deleteUser(int $id);
+    public function getUserByEmail(string $email);
+    public function getUserById(int $id);
+    public function saveNewUser(User $user);
+    public function updateUser(User $user);
+    public function deleteUser(int $id);
 }

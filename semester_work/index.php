@@ -1,4 +1,5 @@
 <?php
+
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
@@ -6,13 +7,14 @@ require_once 'vendor/autoload.php';
 session_start();
 
 $client = new Google\Client();
-$client->setHttpClient(new \GuzzleHttp\Client(['verify' => false])); 
+$client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
 $client->setAuthConfig('client_secret.json');
 $client->addScope(Google\Service\Gmail::GMAIL_READONLY);
 $client->setRedirectUri('http://localhost:8000/index.php');
 $client->setAccessType('offline');
 
-function getHeader($headers, $name) {
+function getHeader($headers, $name)
+{
     foreach ($headers as $header) {
         if ($header->getName() === $name) {
             return $header->getValue();

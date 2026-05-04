@@ -22,12 +22,13 @@ class GmailService
     private Client $googleClient;
     private FileLogger $fileLogger;
 
-    function __construct(ITokenRepository $tokenRepository,
-                         IUserRepository $userRepository,
-                         IMailRepository $mailRepository,
-                         FileLogger $fileLogger,
-                         AuthService $authService)
-    {
+    public function __construct(
+        ITokenRepository $tokenRepository,
+        IUserRepository $userRepository,
+        IMailRepository $mailRepository,
+        FileLogger $fileLogger,
+        AuthService $authService,
+    ) {
         $this->tokenRepository = $tokenRepository;
         $this->userRepository = $userRepository;
         $this->mailRepository = $mailRepository;
@@ -44,11 +45,9 @@ class GmailService
     public function saveNewEmails(int $userId, array $mails): void
     {
         $currentMail = null;
-        foreach ($mails as $mail)
-        {
+        foreach ($mails as $mail) {
             $currentMail = $this->mailRepository->saveMail($mail);
-            if (is_null($currentMail))
-            {
+            if (is_null($currentMail)) {
                 $this->fileLogger->error("Failed to save mail: " . $mail->messageId);
             }
         }
@@ -94,7 +93,6 @@ class GmailService
             //$this->saveNewEmails($user->userId, $messages);
 
             return $messages;
-
         } catch (Google_Service_Exception $e) {
             $this->fileLogger->error("Gmail API service error: " . $e->getMessage());
             return [];

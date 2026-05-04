@@ -1,9 +1,10 @@
 <?php
+
 namespace MyApp\database;
 
 use PDO;
 
-class database
+class Database
 {
     private static ?PDO $connection = null;
 
@@ -41,7 +42,7 @@ class database
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
                 );
-                
+
                 CREATE TABLE IF NOT EXISTS sync_state (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id INTEGER NOT NULL,

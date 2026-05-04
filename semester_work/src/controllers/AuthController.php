@@ -1,13 +1,12 @@
 <?php
-namespace MyApp\Controllers;
-require_once __DIR__ . '/../../vendor/autoload.php';
 
+namespace MyApp\Controllers;
 
 use Exception;
 use Google\Client;
 use Google_Service_Exception;
 use Google_Service_Gmail;
-use MyApp\database\database;
+use MyApp\database\Database;
 use MyApp\Exceptions\AppException;
 use MyApp\Exceptions\AuthenticationException;
 use MyApp\Logging\LoggerFactory;
@@ -27,7 +26,6 @@ class AuthController extends AbstractController
         $this->googleClient = new Client();
         $this->redirectUri = $this->getRedirectUri();
         $this->configureGoogleClient();
-
     }
 
     private function configureGoogleClient(): void
@@ -184,7 +182,6 @@ class AuthController extends AbstractController
 
             // Перенаправляем на главную или на страницу с письмами
             $this->redirect('/');
-
         } catch (Exception $e) {
             LoggerFactory::getLogger()->error('Authentication failed', ['error' => $e->getMessage()]);
             $this->clearAuth();
@@ -213,8 +210,8 @@ class AuthController extends AbstractController
             $pdo = Database::getConnection();
 
             $stmt = $pdo->prepare("
-            SELECT history_id 
-            FROM sync_state 
+            SELECT history_id
+            FROM sync_state
             WHERE id = 1
         ");
 
@@ -222,10 +219,9 @@ class AuthController extends AbstractController
             $result = $stmt->fetch();
 
             return $result ? $result['history_id'] : null;
-
         } catch (PDOException $e) {
             LoggerFactory::getLogger()->error('Failed to get last history id', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
             return null;
         }
@@ -250,10 +246,9 @@ class AuthController extends AbstractController
         ");
 
             $stmt->execute([':history_id' => $historyId]);
-
         } catch (PDOException $e) {
             LoggerFactory::getLogger()->error('Failed to update history id', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -281,8 +276,7 @@ class AuthController extends AbstractController
             }
 
             $_SESSION['user_id'] = $userId;
-            return (int)$userId;
-
+            return (int) $userId;
         } catch (Exception $e) {
             LoggerFactory::getLogger()->error('Failed to save user', ['error' => $e->getMessage()]);
             throw new AuthenticationException('User authentication failed', 0, $e);
@@ -295,7 +289,7 @@ class AuthController extends AbstractController
             if ($this->googleClient->isAccessTokenExpired()) {
                 if ($this->googleClient->getRefreshToken()) {
                     $this->googleClient->fetchAccessTokenWithRefreshToken(
-                        $this->googleClient->getRefreshToken()
+                        $this->googleClient->getRefreshToken(),
                     );
                     $_SESSION['google_access_token'] = $this->googleClient->getAccessToken();
                 } else {
@@ -316,7 +310,7 @@ class AuthController extends AbstractController
             if ($lastHistoryId) {
                 $history = $service->users_history->listUsersHistory($user, [
                     'startHistoryId' => $lastHistoryId,
-                    'maxResults' => 10
+                    'maxResults' => 10,
                 ]);
 
                 foreach ($history->getHistory() as $historyRecord) {
@@ -357,7 +351,7 @@ class AuthController extends AbstractController
                     ':subject' => $emailData['subject'],
                     ':from_email' => $emailData['from'],
                     ':date' => $emailData['date'],
-                    ':snippet' => $emailData['snippet']
+                    ':snippet' => $emailData['snippet'],
                 ]);
 
                 if ($stmt->rowCount() > 0) {
@@ -376,11 +370,10 @@ class AuthController extends AbstractController
             LoggerFactory::getLogger()->info('Fetched new emails from Gmail', [
                 'total_fetched' => count($messages),
                 'new_saved' => $newEmailsCount,
-                'history_id' => $currentHistoryId
+                'history_id' => $currentHistoryId,
             ]);
 
             $this->redirect('/');
-
         } catch (Google_Service_Exception $e) {
             $error = json_decode($e->getMessage(), true);
             LoggerFactory::getLogger()->error('Google API error', ['error' => $error]);
@@ -398,7 +391,7 @@ class AuthController extends AbstractController
             'subject' => '',
             'from' => '',
             'date' => '',
-            'snippet' => $message->getSnippet()
+            'snippet' => $message->getSnippet(),
         ];
 
         foreach ($message->getPayload()->getHeaders() as $header) {
@@ -460,14 +453,13 @@ class AuthController extends AbstractController
                 ':access_token'         => $accessToken,
                 ':refresh_token'        => $refreshToken,
                 ':access_token_update'  => $accessToken,
-                ':refresh_token_update' => $refreshToken
+                ':refresh_token_update' => $refreshToken,
             ]);
 
             LoggerFactory::getLogger()->info('Token saved to database successfully');
-
         } catch (PDOException $e) {
             LoggerFactory::getLogger()->error('Failed to save token to database', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
             throw new AuthenticationException('Не удалось сохранить токен в базе данных.', 0, $e);
         }
@@ -482,7 +474,7 @@ class AuthController extends AbstractController
             $refreshToken = $token['refresh_token'] ?? null;
 
             $stmt = $pdo->prepare("
-            UPDATE google_tokens 
+            UPDATE google_tokens
             SET access_token = :access_token,
                 refresh_token = COALESCE(:refresh_token, refresh_token),
                 updated_at = CURRENT_TIMESTAMP
@@ -494,7 +486,7 @@ class AuthController extends AbstractController
             $stmt->execute([
                 ':user_id' => $userId,
                 ':access_token' => $accessToken,
-                ':refresh_token' => $refreshToken
+                ':refresh_token' => $refreshToken,
             ]);
 
             if ($stmt->rowCount() === 0) {
@@ -502,10 +494,9 @@ class AuthController extends AbstractController
             } else {
                 LoggerFactory::getLogger()->info('Token updated in database successfully');
             }
-
         } catch (PDOException $e) {
             LoggerFactory::getLogger()->error('Failed to update token in database', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
             throw new AuthenticationException('Не удалось обновить токен в базе данных.', 0, $e);
         }
@@ -519,10 +510,10 @@ class AuthController extends AbstractController
             $userId = $_SESSION['user_id'] ?? 'default_user';
 
             $stmt = $pdo->prepare("
-            SELECT access_token, refresh_token 
-            FROM google_tokens 
+            SELECT access_token, refresh_token
+            FROM google_tokens
             WHERE user_id = :user_id
-            ORDER BY updated_at DESC 
+            ORDER BY updated_at DESC
             LIMIT 1
         ");
 
@@ -538,10 +529,9 @@ class AuthController extends AbstractController
             }
 
             return null;
-
         } catch (PDOException $e) {
             LoggerFactory::getLogger()->error('Failed to load token from database', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
             return null;
         }

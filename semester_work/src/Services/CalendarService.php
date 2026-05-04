@@ -21,12 +21,13 @@ class CalendarService
     private Client $googleClient;
     private FileLogger $fileLogger;
 
-    function __construct(ITokenRepository $tokenRepository,
-                         IUserRepository $userRepository,
-                         IMailRepository $mailRepository,
-                         FileLogger $fileLogger,
-                         AuthService $authService)
-    {
+    public function __construct(
+        ITokenRepository $tokenRepository,
+        IUserRepository $userRepository,
+        IMailRepository $mailRepository,
+        FileLogger $fileLogger,
+        AuthService $authService,
+    ) {
         $this->tokenRepository = $tokenRepository;
         $this->userRepository = $userRepository;
         $this->mailRepository = $mailRepository;
@@ -61,10 +62,10 @@ class CalendarService
                                 'summary' => $event->getSummary(),
                                 'start'   => $event->getStart()->getDateTime() ?? $event->getStart()->getDate(),
                                 'end'     => $event->getEnd()->getDateTime() ?? $event->getEnd()->getDate(),
-                                'location'=> $event->getLocation(),
+                                'location' => $event->getLocation(),
                                 'description' => $event->getDescription(),
                                 'calendarName' => $calendar->getSummary(),
-                                'id' => $event->getId()
+                                'id' => $event->getId(),
                             ];
                         }
                     }
@@ -73,7 +74,6 @@ class CalendarService
                 $this->fileLogger->warning("getGoogleEvents: No calendars found for this user.");
             }
             return $events;
-
         } catch (\Google_Service_Exception $e) {
             $this->fileLogger->error("getGoogleEvents (Service Error): " . $e->getMessage());
             return [];

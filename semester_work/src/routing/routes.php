@@ -5,69 +5,69 @@ return [
         'method' => 'GET',
         'pattern' => '/',
         'controller' => 'HomeController',
-        'action' => 'index'
+        'action' => 'index',
     ],
     [
         'method' => 'GET',
         'pattern' => '/auth',
         'controller' => 'AuthController',
-        'action' => 'index'
+        'action' => 'index',
     ],
     [
         'method' => 'GET',
         'pattern' => '/auth/gmail',
         'controller' => 'AuthController',
-        'action' => 'fetchAndSaveGmailData'
+        'action' => 'fetchAndSaveGmailData',
     ],
     [
         'method' => 'GET',
         'pattern' => '/auth/success',
         'controller' => 'AuthController',
-        'action' => 'success'
+        'action' => 'success',
     ],
     [
         'method' => 'GET',
         'pattern' => '/auth/logout',
         'controller' => 'AuthController',
-        'action' => 'logout'
+        'action' => 'logout',
     ],
     [
         'method'     => 'GET',
         'pattern'    => '/',
         'controller' => 'HomeController',
-        'action'     => 'index'
+        'action'     => 'index',
     ],
     // Главная
     [
         'method'     => 'GET',
         'pattern'    => '/',
         'controller' => 'StaticPageController',
-        'action'     => 'show'
+        'action'     => 'show',
     ],
     // Статические страницы
     [
         'method'     => 'GET',
         'pattern'    => '/about',
         'controller' => 'StaticPageController',
-        'action'     => 'show'
+        'action'     => 'show',
     ],
     [
         'method'     => 'GET',
         'pattern'    => '/contacts',
         'controller' => 'StaticPageController',
-        'action'     => 'show'
+        'action'     => 'show',
     ],
     [
         'method'     => 'GET',
         'pattern'    => '/privacy',
         'controller' => 'StaticPageController',
-        'action'     => 'show'
+        'action'     => 'show',
     ],
     // Отправка формы
     [
         'method'     => 'POST',
         'pattern'    => '/contacts/send',
         'controller' => 'StaticPageController',
-        'action'     => 'sendContactForm'
+        'action'     => 'sendContactForm',
     ],
 ];

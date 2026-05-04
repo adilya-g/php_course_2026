@@ -4,6 +4,6 @@ namespace MyApp\repositories\interfaces;
 
 interface ITokenRepository
 {
-    function saveRefreshTokenToDatabase(int $userId, string $refreshToken): void;
-    function getRefreshTokenFromDatabase(int $userId): ?string;
+    public function saveRefreshTokenToDatabase(int $userId, string $refreshToken): void;
+    public function getRefreshTokenFromDatabase(int $userId): ?string;
 }

@@ -479,4 +479,4 @@ composer.lock
  
  * . s q l i t e 3 
  
- 
+ !/client_secret.json

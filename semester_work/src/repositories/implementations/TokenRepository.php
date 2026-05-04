@@ -2,7 +2,7 @@
 
 namespace MyApp\repositories\implementations;
 
-use MyApp\database\database;
+use MyApp\database\Database;
 use MyApp\repositories\interfaces\ITokenRepository;
 use MyApp\Logging\FileLogger;
 use PDO;
@@ -18,8 +18,11 @@ class TokenRepository implements ITokenRepository
         $this->logger = $logger;
     }
 
-    public function saveRefreshTokenToDatabase(int $userId, string $refreshToken, int $expiresInSeconds = 15768000): void
-    {
+    public function saveRefreshTokenToDatabase(
+        int $userId,
+        string $refreshToken,
+        int $expiresInSeconds = 15768000
+    ): void {
         try {
             $pdo = Database::getConnection();
             $encryptedToken = $this->encryptToken($refreshToken);
@@ -59,9 +62,9 @@ class TokenRepository implements ITokenRepository
             $pdo = Database::getConnection();
             $stmt = $pdo->prepare("
                 SELECT refresh_token, expires_at
-                FROM google_tokens 
+                FROM google_tokens
                 WHERE user_id = :user_id
-                ORDER BY updated_at DESC 
+                ORDER BY updated_at DESC
                 LIMIT 1
             ");
             $stmt->execute([':user_id' => $userId]);

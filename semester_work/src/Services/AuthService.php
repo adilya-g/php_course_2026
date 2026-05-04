@@ -21,7 +21,7 @@ class AuthService
 
     public function __construct(
         ITokenRepository $tokenRepository,
-        IUserRepository $userRepository
+        IUserRepository $userRepository,
     ) {
         $this->googleClient = new Client();
         $this->redirectUri = $this->getRedirectUri();

@@ -1,10 +1,9 @@
 <?php
 
 namespace MyApp\Controllers;
-require_once __DIR__ . '/../../vendor/autoload.php';
 
 use MyApp\attributes\Route;
-use MyApp\database\database;
+use MyApp\database\Database;
 use MyApp\Controllers;
 use PDO;
 use PDOException;
@@ -19,4 +18,3 @@ class HomeController extends AbstractController
         echo $this->render('home.html');
     }
 }
-

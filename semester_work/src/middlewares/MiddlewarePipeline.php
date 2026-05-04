@@ -21,7 +21,7 @@ class MiddlewarePipeline
     {
         $middleware = $container->get($middlewareClass);
 
-        return $this->use(function(Request $request, callable $next) use ($middleware) {
+        return $this->use(function (Request $request, callable $next) use ($middleware) {
             return $middleware->handle($request, $next);
         });
     }
@@ -30,7 +30,7 @@ class MiddlewarePipeline
     {
         $i = -1;
 
-        $next = function() use (&$i, &$next, $request): mixed {
+        $next = function () use (&$i, &$next, $request): mixed {
             $i++;
 
             if ($i < count($this->stack)) {
@@ -42,5 +42,4 @@ class MiddlewarePipeline
 
         return $next();
     }
-
 }

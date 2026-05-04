@@ -4,5 +4,4 @@ namespace MyApp\Services;
 
 class UserService
 {
-
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace MyApp\routing;
 
 class ClassesGetter
@@ -12,7 +13,9 @@ class ClassesGetter
         $phpFiles = new \RegexIterator($allFiles, '/\.php$/');
 
         foreach ($phpFiles as $file) {
-            if ($file->getFilename() === 'classesGetter.php') continue;
+            if ($file->getFilename() === 'classesGetter.php') {
+                continue;
+            }
 
             $content = file_get_contents($file->getPathname());
 
@@ -30,5 +33,3 @@ class ClassesGetter
         return $foundClasses;
     }
 }
-
-

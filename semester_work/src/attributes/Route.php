@@ -1,4 +1,5 @@
 <?php
+
 namespace MyApp\attributes;
 
 use Attribute;
@@ -6,9 +7,9 @@ use Attribute;
 #[Attribute]
 class Route
 {
-    public function __construct(public string $path,
-        public array $methods = ['GET'])
-    {
-
+    public function __construct(
+        public string $path,
+        public array $methods = ['GET'],
+    ) {
     }
 }

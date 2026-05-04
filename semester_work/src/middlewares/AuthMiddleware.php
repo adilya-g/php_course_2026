@@ -1,4 +1,5 @@
 <?php
+
 namespace MyApp\Middlewares;
 
 use MyApp\Entities\Request;
@@ -9,7 +10,7 @@ class AuthMiddleware implements IMiddleware
     public AuthService $authService;
     public UserService $userService;
 
-    function __construct(AuthService $authService)
+    public function __construct(AuthService $authService)
     {
         $this->authService = $authService;
     }
@@ -19,16 +20,11 @@ class AuthMiddleware implements IMiddleware
         $authCode = $request->sessionData['code']
             ?? $request->params['code']
             ?? null;
-        if(!is_null($authCode))
-        {
+        if (!is_null($authCode)) {
             $this->authService->exchangeCode($authCode);
-        }
-        else if(isset($request->sessionData['refresh_token']))
-        {
+        } elseif (isset($request->sessionData['refresh_token'])) {
             $this->authService->validateToken();
-        }
-        else
-        {
+        } else {
             $this->authService->authorize();
         }
 

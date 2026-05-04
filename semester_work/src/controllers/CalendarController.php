@@ -16,8 +16,12 @@ class CalendarController extends AbstractController
     private FileLogger $fileLogger;
     private CalendarService $calendarService;
 
-    function __construct(AuthService $authService, GmailService $gmailService, FileLogger $fileLogger, CalendarService $calendarService)
-    {
+    public function __construct(
+        AuthService $authService,
+        GmailService $gmailService,
+        FileLogger $fileLogger,
+        CalendarService $calendarService
+    ) {
         $this->authService = $authService;
         $this->gmailService = $gmailService;
         $this->fileLogger = $fileLogger;
