@@ -5,6 +5,10 @@ Thumbs.db:encryptable
 ehthumbs.db
 ehthumbs_vista.db
 
+# Secrets
+client_secret.json
+client_secret_past.json
+
 # Dump file
 *.stackdump
 
@@ -471,6 +475,8 @@ composer.lock
 .sass-cache/
 *.css.map
 *.sass.map
-*.scss.map* . s q l i t e  
- * . s q l i t e 3  
+*.scss.map* . s q l i t e 
+ 
+ * . s q l i t e 3 
+ 
  
