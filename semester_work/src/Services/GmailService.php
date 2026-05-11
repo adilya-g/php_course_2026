@@ -61,7 +61,7 @@ class GmailService
             $userInfo = $oauth2->userinfo->get();
             $email = $userInfo->email;
             $this->fileLogger->info("Getting email from gmail: " . $email);
-            // Получаем пользователя из БД
+
             $user = $this->userRepository->getUserByEmail($email);
             if (is_null($user)) {
                 $this->fileLogger->error("Failed to find user: " . $email);
@@ -71,7 +71,6 @@ class GmailService
             $messages = [];
             $gmailUser = 'me';
 
-            // Получаем список писем
             $messagesList = $service->users_messages->listUsersMessages($gmailUser, ['maxResults' => 10]);
 
             if (!$messagesList || !$messagesList->getMessages()) {
@@ -79,7 +78,6 @@ class GmailService
                 return [];
             }
 
-            // Получаем полные данные каждого письма
             foreach ($messagesList->getMessages() as $msg) {
                 try {
                     $fullMessage = $service->users_messages->get($gmailUser, $msg->getId());
@@ -89,8 +87,7 @@ class GmailService
                 }
             }
 
-            // Сохраняем письма в БД
-            //$this->saveNewEmails($user->userId, $messages);
+            $this->saveNewEmails($user->userId, $messages);
 
             return $messages;
         } catch (Google_Service_Exception $e) {

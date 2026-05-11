@@ -75,7 +75,7 @@ try {
     }
 
 
-    set_exception_handler(function ($exception) use ($servicesContainer) {
+    set_exception_handler(function ($exception) use ($servicesContainer): void {
         $servicesContainer->get(FileLogger::class)->error(
             $exception->getMessage(),
             [
@@ -89,7 +89,7 @@ try {
 
 
     $request = new Request();
-    $request->params = $_GET ?? $_POST;
+    $request->params = array_merge($_GET, $_POST);
     $request->sessionData = $_SESSION ?? [];
     $request->method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
     $request->uri = $_SERVER['REQUEST_URI'] ?? '/';
@@ -97,7 +97,7 @@ try {
 
     $pipeline = new MiddlewarePipeline()->useMiddleware(AuthMiddleware::class, $servicesContainer)
         ->useMiddleware(RoutingMiddleware::class, $servicesContainer)
-        ->useMiddleware(middlewares\StaticFileMiddleware::class, $servicesContainer);
+        ->useMiddleware(StaticFileMiddleware::class, $servicesContainer);
     $pipeline->executeAsync($request);
 } catch (Exception $exception) {
     echo $exception->getMessage();
