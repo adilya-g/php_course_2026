@@ -21,8 +21,8 @@ class MailRepository implements IMailRepository
     {
         try {
             $pdo = Database::getConnection();
-            $stmt = $pdo->prepare("SELECT * FROM `mails` WHERE `mailId` = :mailId");
-            $stmt->bindParam(':mailId', $mailId);
+            $stmt = $pdo->prepare("SELECT * FROM `emails` WHERE `id` = :id");
+            $stmt->bindParam(':id', $mailId);
             $stmt->execute();
             $mail = $stmt->fetch();
             return $mail;
@@ -36,7 +36,7 @@ class MailRepository implements IMailRepository
     {
         try {
             $pdo = Database::getConnection();
-            $stmt = $pdo->prepare("SELECT * FROM `mails` WHERE `userId` = :userId");
+            $stmt = $pdo->prepare("SELECT * FROM `emails` WHERE `user_id` = :userId");
             $stmt->bindParam(':userId', $userId);
             $stmt->execute();
             $mails = $stmt->fetchAll();
@@ -51,7 +51,7 @@ class MailRepository implements IMailRepository
     {
         try {
             $pdo = Database::getConnection();
-            $stmt = $pdo->prepare("DELETE FROM `mails` WHERE `mailId` = :mailId");
+            $stmt = $pdo->prepare("DELETE FROM `emails` WHERE `id` = :mailId");
             $stmt->bindParam(':mailId', $mailId);
             $stmt->execute();
             return true;
@@ -61,12 +61,12 @@ class MailRepository implements IMailRepository
         }
     }
 
-    public function updateMail($mailId, $mailPriority): bool
+    public function updateMail($mailId, $mailData): bool
     {
         try {
             $pdo = Database::getConnection();
-            $stmt = $pdo->prepare("UPDATE `mails` SET `mailPriority` = :mailPriority WHERE mailId = :mailId");
-            $stmt->bindParam(':mailPriority', $mailPriority);
+            $stmt = $pdo->prepare("UPDATE `emails` SET `importance` = :mailPriority WHERE id = :mailId");
+            $stmt->bindParam(':mailPriority', $mailData);
             $stmt->bindParam(':mailId', $mailId);
             $stmt->execute();
             return true;
@@ -80,17 +80,23 @@ class MailRepository implements IMailRepository
     {
         try {
             $pdo = Database::getConnection();
-            $stmt = $pdo->prepare("INSERT INTO emails (user_id, message_id, subject, 
-                    from_email, date, snippet, priority) VALUES 
-                    (:user_id, :message_id, :subject, :from_email, :date, :snippet, :priority)");
+            $stmt = $pdo->prepare("INSERT INTO emails (user_id, sender_id, gmail_message_id, thread_id,
+                    gmail_link, recipient, subject, snippet, body, recieved_at, history_id, importance, created_at) VALUES 
+                    (:user_id, :sender_id, :gmail_message_id, :thread_id,
+                    :gmail_link, :recipient, :subject, :snippet, :body, :recieved_at, :history_id, :importance, :created_at)");
             $stmt->execute([
                 ':user_id' => $mail->userId,
-                ':message_id' => $mail->messageId,
-                ':subject' => $mail->subject,
-                ':from_email' => $mail->fromEmail,
-                ':date' => $mail->date,
-                ':snippet' => $mail->snippet,
-                ':priority' => $mail->priority,
+                ':sender_id' => $mail->senderId,
+                ':gmail_message_id' => $mail->messageId,
+                ':thread_id' => $mail->threadId,
+                ':gmail_link' => $mail->link,
+                ':recipient' => $mail->recepient,
+            ':subject' => $mail->subject,
+            ':snippet' => $mail->snippet,
+            ':body' => $mail->body,
+            ':recieved_at' => $mail->receivedAt,
+            '::history_id' => $mail->historyId,
+            ':importance' => $mail->importance
             ]);
             $mailId = $pdo->lastInsertId();
             $mail->mailId = $mailId;

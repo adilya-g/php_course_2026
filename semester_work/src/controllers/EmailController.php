@@ -20,15 +20,36 @@ class EmailController extends AbstractController
         $this->gmailService = $gmailService;
         $this->fileLogger = $fileLogger;
     }
-    #[Route("/home/mails", ["GET"])]
+    #[Route("/api/emails", ["GET"])]
     public function getMails()
     {
         $this->fileLogger->info("Getting emails");
-        $mails = $this->gmailService->getEmailsFromGmail();
+        $userId = $this->gmailService->resolveUser()->userId;
+        $mails = $this->gmailService->getEmailsFromRepository($userId);
         $jsonResponse = json_encode($mails);
         header('Content-Type: application/json');
         header('Access-Control-Allow-Origin: *');
         header('Content-Length: ' . strlen($jsonResponse));
         echo $jsonResponse;
+    }
+
+    #[Route("/api/emails/sync", ["GET"])]
+    public function syncEmails()
+    {
+        $this->fileLogger->info("Syncing emails");
+        $newEmails = $this->gmailService->syncMails();
+        if(empty($newEmails)) {
+            $this->fileLogger->info("No new emails");
+        }
+        $jsonResponse = json_encode($newEmails);
+        header('Content-Type: application/json');
+        header('Access-Control-Allow-Origin: *');
+        header('Content-Length: ' . strlen($jsonResponse));
+        echo $jsonResponse;
+    }
+
+    public function removeEmail()
+    {
+        $this->fileLogger->info("Removing email");
     }
 }

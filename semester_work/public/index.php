@@ -30,6 +30,10 @@ use MyApp\attributes\Route;
 use MyApp\Services\AuthService;
 use MyApp\Services\GmailService;
 use MyApp\Services\UserService;
+use MyApp\repositories\implementations\LabelRepository;
+use MyApp\repositories\implementations\SenderRepository;
+use MyApp\repositories\interfaces\ILabelRepository;
+use MyApp\repositories\interfaces\ISenderRepository;
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -54,6 +58,8 @@ try {
     $servicesContainer->bindSingleton(ITokenRepository::class, TokenRepository::class);
     $servicesContainer->bindSingleton(IMailRepository::class, MailRepository::class);
     $servicesContainer->bindSingleton(IUserRepository::class, UserRepository::class);
+    $servicesContainer->bindSingleton(ISenderRepository::class, SenderRepository::class);
+    $servicesContainer->bindSingleton(ILabelRepository::class, LabelRepository::class);
 
     $servicesContainer->singleton(AuthService::class);
     $servicesContainer->singleton(GmailService::class);

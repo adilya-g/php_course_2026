@@ -6,7 +6,7 @@
         "ext-pdo": "*",
         "ext-pdo_sqlite": "*",
         "haydenpierce/class-finder": "^0.5.3",
-        "php-di/php-di": "^8.5"
+        "php-di/php-di": "^7.1"
     },
     "autoload": {
         "psr-4": {
@@ -17,7 +17,8 @@
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.10",
         "phpcompatibility/php-compatibility": "^10.0.0-alpha1",
-        "rector/rector": "^2.4"
+        "rector/rector": "^2.4",
+        "phpunit/phpunit": "^13.1"
     },
     "config": {
         "allow-plugins": {
